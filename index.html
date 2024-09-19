@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <title>ScreenMatch App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background-color: #f5c518; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+    header img { height: 50px; }
+    nav ul { list-style: none; display: flex; gap: 20px; }
+    nav ul li { cursor: pointer; }
+    .menu { display: none; position: absolute; background: #fff; border: 1px solid #ccc; padding: 10px; }
+    .show { display: block; }
+    .language-selector { margin-right: 20px; cursor: pointer; }
+    footer { background-color: #222; color: white; padding: 10px; text-align: center; }
+    main { padding: 20px; }
+    .card { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; }
+    .card img { width: 100%; height: auto; }
+    .card video { width: 100%; height: 200px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="ScreenMatch Logo">
+  <nav>
+    <ul>
+      <li>Todo</li>
+      <li id="buscarMenu">Buscar</li>
+      <li>Próximamente</li>
+    </ul>
+  </nav>
+  <div>
+    <button id="loginButton">Iniciar sesión</button>
+    <button id="watchlistButton">Lista de seguimiento</button>
+    <div class="language-selector" id="languageSelector">ES</div>
+  </div>
+</header>
+
+<div id="buscarDropdown" class="menu">Buscar películas</div>
+
+<main>
+  <section>
+    <h2>Próximamente</h2>
+    <div id="upcomingMovies"></div>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2024 ScreenMatch. Todos los derechos reservados.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
