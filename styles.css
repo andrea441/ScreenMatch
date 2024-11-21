@@ -1,0 +1,229 @@
+/* Estilos del header */
+.header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 0;
+}
+
+.logo-container {
+    width: 50px;
+    height: 50px;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.logo-placeholder {
+    color: #6c757d;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.site-title {
+    font-size: 2rem;
+    margin: 0;
+    color: #212529;
+}
+
+/* Estilos para la sección de bienvenida */
+.welcome-section {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 2rem 0;
+}
+
+.video-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    /* Mantiene el ratio 16:9 */
+    padding-top: 56.25%;
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.welcome-section h2 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.welcome-section .lead {
+    color: #6c757d;
+    font-size: 1.25rem;
+}
+
+.welcome-section p {
+    color: #5a6a7e;
+    line-height: 1.6;
+}
+
+/* Estilos para el área de subida de archivos */
+.upload-container {
+    padding: 2rem;
+}
+
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.upload-area:hover {
+    border-color: #6c757d;
+    background-color: #e9ecef;
+}
+
+.upload-button {
+    position: relative;
+    background-color: #13111C;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    overflow: hidden;
+}
+
+.upload-button:hover {
+    background-color: #2d2b35;
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* Estilos para el área de recomendaciones */
+.movie-card {
+    position: relative;
+    height: 100%;
+    transition: transform 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+.movie-card:hover {
+    transform: translateY(-5px);
+}
+
+.movie-card .card-img-top {
+    height: 400px;
+    object-fit: cover;
+}
+
+.card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.overlay-content {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 10px; 
+}
+
+.movie-card:hover .card-overlay {
+    opacity: 1;
+}
+
+.overlay-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.overlay-info {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.overlay-overview {
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.overlay-stats {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.tmdb-link-container {
+    margin-top: auto;
+}
+
+.tmdb-link {
+    display: block;
+    padding: 8px 12px;
+    background-color: #01b4e4;
+    color: white;
+    text-align: center;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.tmdb-link:hover {
+    background-color: #0099c9;
+    color: white;
+    text-decoration: none;
+}
+
+.rating-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-weight: bold;
+    z-index: 2;
+}
+
+/* Estilizar la barra de desplazamiento en el overlay */
+.overlay-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overlay-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.overlay-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
