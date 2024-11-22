@@ -6,8 +6,9 @@ const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 // Datos globales
 let userRatings = [];
 let recommendations = [];
+let allRecommendations = [];
 let movieCache = new Map();
-let genreMap = new Map(); // Para mapear IDs de género a nombres
+let genreMap = new Map();
 
 // Elementos del DOM
 const csvFileInput = document.getElementById('csvFile');
@@ -19,6 +20,7 @@ const regenerateBtn = document.getElementById('regenerateBtn');
 const exportBtn = document.getElementById('exportBtn');
 const genreFilter = document.getElementById('genreFilter');
 const yearFilter = document.getElementById('yearFilter');
+const clearFiltersBtn = document.getElementById('clearFilters');
 
 // Event Listeners
 csvFileInput.addEventListener('change', handleFileUpload);
@@ -26,6 +28,7 @@ regenerateBtn?.addEventListener('click', generateRecommendations);
 exportBtn?.addEventListener('click', exportRecommendations);
 genreFilter?.addEventListener('change', filterRecommendations);
 yearFilter?.addEventListener('change', filterRecommendations);
+clearFiltersBtn?.addEventListener('click', clearFilters);
 
 // Inicializar mapa de géneros
 async function initializeGenreMap() {
@@ -138,7 +141,6 @@ async function handleFileUpload(event) {
             throw new Error('No se encontraron películas válidas');
         }
 
-        // Buscar IDs de TMDB para las películas mejor calificadas
         const highRatedMovies = userRatings
             .filter(movie => movie.rating >= 7)
             .slice(0, 10);
@@ -152,7 +154,6 @@ async function handleFileUpload(event) {
         }
 
         showImportStats();
-        initializeFilters();
         mainContent.classList.remove('d-none');
         await generateRecommendations();
 
@@ -168,6 +169,13 @@ async function handleFileUpload(event) {
 
 // Función para mostrar estadísticas de la importación
 function showImportStats() {
+    // Elimina cualquier mensaje existente
+    const existingMessage = document.querySelector('.alert.alert-success');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+
+    // Crear el nuevo mensaje
     const statsMessage = document.createElement('div');
     statsMessage.className = 'alert alert-success';
     const avgRating = (userRatings.reduce((sum, movie) => sum + movie.rating, 0) / userRatings.length).toFixed(1);
@@ -185,10 +193,11 @@ function showImportStats() {
 }
 
 // Función para inicializar los filtros
+// Función para inicializar los filtros
 function initializeFilters() {
-    // Obtener géneros únicos
+    // Obtener géneros únicos de las recomendaciones
     const genres = new Set();
-    userRatings.forEach(movie => {
+    recommendations.forEach(movie => {
         movie.genres.forEach(genre => genres.add(genre));
     });
     
@@ -201,8 +210,8 @@ function initializeFilters() {
         genreFilter.appendChild(option);
     });
     
-    // Obtener años únicos
-    const years = new Set(userRatings.map(movie => movie.year));
+    // Obtener años únicos de las recomendaciones
+    const years = new Set(recommendations.map(movie => movie.year));
     
     // Poblar selector de años
     yearFilter.innerHTML = '<option value="">Todos los años</option>';
@@ -387,11 +396,14 @@ async function generateRecommendations() {
             });
         }
         
-        // Ordenar por score y seleccionar las mejores 8
-        recommendations = processedRecommendations
+        // Guardar en ambos arrays
+        allRecommendations = processedRecommendations
             .sort((a, b) => b.score - a.score)
             .slice(0, 8);
+        recommendations = [...allRecommendations];
         
+        // Inicializar los filtros
+        initializeFilters();
         displayRecommendations();
         
     } catch (error) {
@@ -478,21 +490,29 @@ function filterRecommendations() {
     const selectedGenre = genreFilter.value;
     const selectedYear = yearFilter.value;
     
-    let filteredRecommendations = recommendations;
+    // Siempre empezar desde todas las recomendaciones
+    recommendations = [...allRecommendations];
     
-    if (selectedGenre) {
-        filteredRecommendations = filteredRecommendations.filter(movie => 
-            movie.genres.includes(selectedGenre)
-        );
-    }
+    // Aplicar ambos filtros si están seleccionados
+    recommendations = recommendations.filter(movie => {
+        const matchesGenre = !selectedGenre || movie.genres.includes(selectedGenre);
+        const matchesYear = !selectedYear || movie.year.toString() === selectedYear;
+        return matchesGenre && matchesYear;
+    });
     
-    if (selectedYear) {
-        filteredRecommendations = filteredRecommendations.filter(movie => 
-            movie.year.toString() === selectedYear
-        );
-    }
+    displayRecommendations();
+}
+
+// Función para limpiar los filtros
+function clearFilters() {
+    // Resetear los valores de los selectores
+    genreFilter.value = '';
+    yearFilter.value = '';
     
-    recommendations = filteredRecommendations;
+    // Restaurar todas las recomendaciones
+    recommendations = [...allRecommendations];
+    
+    // Mostrar todas las recomendaciones
     displayRecommendations();
 }
 
