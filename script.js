@@ -1,9 +1,7 @@
-// Configuración de TMDB API
 const TMDB_API_KEY = 'ee4278db3e89463fb9568b1538a8c9c7';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 
-// Datos globales
 let userRatings = [];
 let recommendations = [];
 let allRecommendations = [];
@@ -34,7 +32,7 @@ clearFiltersBtn?.addEventListener('click', clearFilters);
 async function initializeGenreMap() {
     try {
         const response = await fetch(
-            `${TMDB_BASE_URL}/genre/movie/list?api_key=${TMDB_API_KEY}&language=es-ES`
+            `${TMDB_BASE_URL}/genre/movie/list?api_key=${TMDB_API_KEY}&language=en-US`
         );
         const data = await response.json();
         data.genres.forEach(genre => {
@@ -53,7 +51,7 @@ function getGenreName(genreId) {
 // Función para buscar una película en TMDB
 async function searchMovieInTMDB(title, year) {
     const query = encodeURIComponent(title);
-    const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${query}&year=${year}&language=es-ES`;
+    const url = `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${query}&year=${year}&language=en-US`;
     
     try {
         const response = await fetch(url);
@@ -70,7 +68,7 @@ async function searchMovieInTMDB(title, year) {
 
 // Función para obtener recomendaciones de TMDB
 async function getMovieRecommendations(movieId) {
-    const url = `${TMDB_BASE_URL}/movie/${movieId}/recommendations?api_key=${TMDB_API_KEY}&language=es-ES`;
+    const url = `${TMDB_BASE_URL}/movie/${movieId}/recommendations?api_key=${TMDB_API_KEY}&language=en-US`;
     
     try {
         const response = await fetch(url);
@@ -106,7 +104,7 @@ async function handleFileUpload(event) {
     mainContent.classList.add('d-none');
 
     try {
-        await initializeGenreMap(); // Inicializar mapa de géneros
+        await initializeGenreMap();
 
         const results = await new Promise((resolve) => {
             Papa.parse(file, {
@@ -122,7 +120,6 @@ async function handleFileUpload(event) {
             throw new Error('Formato de archivo inválido');
         }
 
-        // Filtrar películas y procesar ratings
         userRatings = results.data
             .filter(row => 
                 row['Title Type']?.toLowerCase() === 'movie' &&
@@ -169,13 +166,11 @@ async function handleFileUpload(event) {
 
 // Función para mostrar estadísticas de la importación
 function showImportStats() {
-    // Elimina cualquier mensaje existente
     const existingMessage = document.querySelector('.alert.alert-success');
     if (existingMessage) {
         existingMessage.remove();
     }
 
-    // Crear el nuevo mensaje
     const statsMessage = document.createElement('div');
     statsMessage.className = 'alert alert-success';
     const avgRating = (userRatings.reduce((sum, movie) => sum + movie.rating, 0) / userRatings.length).toFixed(1);
@@ -193,15 +188,12 @@ function showImportStats() {
 }
 
 // Función para inicializar los filtros
-// Función para inicializar los filtros
 function initializeFilters() {
-    // Obtener géneros únicos de las recomendaciones
     const genres = new Set();
     recommendations.forEach(movie => {
         movie.genres.forEach(genre => genres.add(genre));
     });
     
-    // Poblar selector de géneros
     genreFilter.innerHTML = '<option value="">Todos los géneros</option>';
     [...genres].sort().forEach(genre => {
         const option = document.createElement('option');
@@ -210,10 +202,8 @@ function initializeFilters() {
         genreFilter.appendChild(option);
     });
     
-    // Obtener años únicos de las recomendaciones
     const years = new Set(recommendations.map(movie => movie.year));
     
-    // Poblar selector de años
     yearFilter.innerHTML = '<option value="">Todos los años</option>';
     [...years].sort().reverse().forEach(year => {
         const option = document.createElement('option');
@@ -225,10 +215,8 @@ function initializeFilters() {
 
 // Función para analizar preferencias del usuario
 function analyzeUserPreferences(ratings) {
-    // Calcular estadísticas básicas
     const avgRating = ratings.reduce((sum, m) => sum + m.rating, 0) / ratings.length;
     
-    // Analizar preferencias por género
     const genreStats = {};
     ratings.forEach(movie => {
         movie.genres.forEach(genre => {
@@ -247,34 +235,29 @@ function analyzeUserPreferences(ratings) {
         });
     });
 
-    // Calcular pesos de géneros
     const genreWeights = {};
     Object.entries(genreStats).forEach(([genre, stats]) => {
         const avgGenreRating = stats.totalRating / stats.count;
         const frequencyWeight = stats.count / ratings.length;
         const highRatedRatio = stats.highRatedCount / stats.count;
         
-        // Combinar factores para el peso final
         genreWeights[genre] = (avgGenreRating * 0.4 + frequencyWeight * 0.3 + highRatedRatio * 0.3) * 10;
     });
 
     return {
         avgRating,
         genreWeights,
-        // Usar películas con rating 7+ como semillas
-        ratingThreshold: 7.0
+        ratingThreshold: 8.0
     };
 }
 
 // Función actualizada para seleccionar películas semilla
 function selectSeedMovies(ratings, preferences) {
-    // Filtrar películas bien calificadas con ID de TMDB
     const goodMovies = ratings.filter(movie => 
         movie.tmdbId && 
         movie.rating >= preferences.ratingThreshold
     );
     
-    // Ordenar por rating y agrupar por género principal
     const moviesByGenre = {};
     goodMovies.forEach(movie => {
         if (movie.genres.length > 0) {
@@ -284,38 +267,51 @@ function selectSeedMovies(ratings, preferences) {
         }
     });
 
-    // Seleccionar las mejores películas de cada género preferido
     const seedMovies = new Set();
-    const targetSeeds = 10; // Aumentamos a 10 para más variedad
+    const targetSeeds = 10;
 
-    // Ordenar géneros por peso
     const sortedGenres = Object.entries(preferences.genreWeights)
-        .sort((a, b) => b[1] - a[1])
-        .map(([genre]) => genre);
+        .map(([genre, weight]) => ({
+            genre,
+            weight: weight * (0.8 + Math.random() * 0.4)
+        }))
+        .sort((a, b) => b.weight - a.weight)
+        .map(entry => entry.genre);
 
-    // Seleccionar las mejores películas de cada género principal
     sortedGenres.forEach(genre => {
         if (seedMovies.size >= targetSeeds) return;
         
         const genreMovies = moviesByGenre[genre];
         if (genreMovies && genreMovies.length > 0) {
-            // Tomar las 2 mejores películas del género si están disponibles
-            genreMovies
-                .sort((a, b) => b.rating - a.rating)
-                .slice(0, 2)
-                .forEach(movie => seedMovies.add(movie));
+            const randomizedMovies = genreMovies
+                .map(movie => ({
+                    ...movie,
+                    randomScore: movie.rating * (0.9 + Math.random() * 0.2)
+                }))
+                .sort((a, b) => b.randomScore - a.randomScore);
+
+            const topMovies = randomizedMovies.slice(0, 5);
+            const numToSelect = Math.min(2 + Math.floor(Math.random() * 2), topMovies.length);
+            
+            for (let i = 0; i < numToSelect && seedMovies.size < targetSeeds; i++) {
+                seedMovies.add(topMovies[i]);
+            }
         }
     });
 
-    // Si aún no tenemos suficientes, agregar las películas mejor calificadas restantes
     if (seedMovies.size < targetSeeds) {
-        goodMovies
-            .sort((a, b) => b.rating - a.rating)
-            .forEach(movie => {
-                if (seedMovies.size < targetSeeds && !seedMovies.has(movie)) {
-                    seedMovies.add(movie);
-                }
-            });
+        const remainingMovies = goodMovies
+            .filter(movie => !seedMovies.has(movie))
+            .map(movie => ({
+                ...movie,
+                randomScore: movie.rating * (0.9 + Math.random() * 0.2)
+            }))
+            .sort((a, b) => b.randomScore - a.randomScore);
+
+        for (const movie of remainingMovies) {
+            if (seedMovies.size >= targetSeeds) break;
+            seedMovies.add(movie);
+        }
     }
 
     return Array.from(seedMovies);
@@ -349,13 +345,16 @@ async function getRecommendationPool(seedMovies, userPreferences) {
     return recommendationPool;
 }
 
-// Nueva función para calcular score de géneros
+// Función para calcular puntuación de géneros con variabilidad
 function calculateGenreScore(genreIds, genreWeights) {
     return genreIds.reduce((score, genreId) => {
         const genreName = getGenreName(genreId);
-        return score + (genreWeights[genreName] || 0);
+        const baseWeight = genreWeights[genreName] || 0;
+        const randomizedWeight = baseWeight * (0.85 + Math.random() * 0.3);
+        return score + randomizedWeight;
     }, 0);
 }
+
 
 // Función principal de generación de recomendaciones actualizada
 async function generateRecommendations() {
@@ -372,14 +371,19 @@ async function generateRecommendations() {
         for (const [_, recommendation] of recommendationPool) {
             const rec = recommendation.tmdbData;
             
-            // Evitar películas ya vistas
-            if (userRatings.some(ur => ur.tmdbId === rec.id)) continue;
+            const isAlreadyWatched = userRatings.some(ur => 
+                (ur.tmdbId && ur.tmdbId === rec.id) ||
+                (ur.title.toLowerCase() === rec.title.toLowerCase() && 
+                 ur.year === new Date(rec.release_date).getFullYear())
+            );
             
-            // Calcular score final
-            const baseScore = rec.vote_average * 0.6; // Peso del rating TMDB
-            const genreScore = recommendation.genreScore * 0.2; // Peso de coincidencia de géneros
-            const seedScore = Math.log2(recommendation.seedMovies.length + 1) * 2; // Peso por coincidencias múltiples
-            const popularityScore = Math.log10(rec.popularity + 1) * 0.2; // Peso de popularidad
+            if (isAlreadyWatched) continue;
+            
+            const randomFactor = 0.9 + Math.random() * 0.2;
+            const baseScore = rec.vote_average * 0.6 * randomFactor;
+            const genreScore = recommendation.genreScore * 0.2 * (0.85 + Math.random() * 0.3);
+            const seedScore = Math.log2(recommendation.seedMovies.length + 1) * 2 * (0.9 + Math.random() * 0.2);
+            const popularityScore = Math.log10(rec.popularity + 1) * 0.2 * (0.85 + Math.random() * 0.3);
             
             const finalScore = baseScore + genreScore + seedScore + popularityScore;
             
@@ -396,13 +400,11 @@ async function generateRecommendations() {
             });
         }
         
-        // Guardar en ambos arrays
         allRecommendations = processedRecommendations
             .sort((a, b) => b.score - a.score)
             .slice(0, 8);
         recommendations = [...allRecommendations];
         
-        // Inicializar los filtros
         initializeFilters();
         displayRecommendations();
         
@@ -415,7 +417,6 @@ async function generateRecommendations() {
     }
 }
 
-
 // Función para mostrar las recomendaciones
 function displayRecommendations() {
     recommendationsContainer.innerHTML = '';
@@ -424,15 +425,13 @@ function displayRecommendations() {
         const card = document.createElement('div');
         card.className = 'col-md-3 mb-4';
         
-        // Formatear la fecha de lanzamiento
         const releaseDate = new Date(movie.release_date || `${movie.year}-01-01`);
-        const formattedDate = releaseDate.toLocaleDateString('es-ES', {
+        const formattedDate = releaseDate.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         });
 
-        // Formatear géneros
         const genres = movie.genres.join(', ');
 
         card.innerHTML = `
@@ -490,10 +489,8 @@ function filterRecommendations() {
     const selectedGenre = genreFilter.value;
     const selectedYear = yearFilter.value;
     
-    // Siempre empezar desde todas las recomendaciones
     recommendations = [...allRecommendations];
     
-    // Aplicar ambos filtros si están seleccionados
     recommendations = recommendations.filter(movie => {
         const matchesGenre = !selectedGenre || movie.genres.includes(selectedGenre);
         const matchesYear = !selectedYear || movie.year.toString() === selectedYear;
@@ -505,14 +502,11 @@ function filterRecommendations() {
 
 // Función para limpiar los filtros
 function clearFilters() {
-    // Resetear los valores de los selectores
     genreFilter.value = '';
     yearFilter.value = '';
     
-    // Restaurar todas las recomendaciones
     recommendations = [...allRecommendations];
     
-    // Mostrar todas las recomendaciones
     displayRecommendations();
 }
 
