@@ -5,6 +5,11 @@ const TMDB_IMG_BASE = 'https://image.tmdb.org/t/p/w500';
 let userRatings = [];
 let recommendations = [];
 let allRecommendations = [];
+let activeFilters = {
+    genres: [],
+    years: [],
+    matchAllGenres: false
+};
 let movieCache = new Map();
 let genreMap = new Map();
 
@@ -190,27 +195,34 @@ function showImportStats() {
 // Función para inicializar los filtros
 function initializeFilters() {
     const genres = new Set();
-    recommendations.forEach(movie => {
+    const years = new Set();
+    
+    allRecommendations.forEach(movie => {
         movie.genres.forEach(genre => genres.add(genre));
+        years.add(movie.year);
     });
-    
-    genreFilter.innerHTML = '<option value="">Todos los géneros</option>';
-    [...genres].sort().forEach(genre => {
-        const option = document.createElement('option');
-        option.value = genre;
-        option.textContent = genre;
-        genreFilter.appendChild(option);
+
+    genreFilter.innerHTML = Array.from(genres)
+        .sort()
+        .map(genre => `<option value="${genre}">${genre}</option>`)
+        .join('');
+
+    yearFilter.innerHTML = Array.from(years)
+        .sort((a, b) => b - a)
+        .map(year => `<option value="${year}">${year}</option>`)
+        .join('');
+
+    // Nuevos event listeners
+    document.getElementById('matchAllGenres').addEventListener('change', (e) => {
+        activeFilters.matchAllGenres = e.target.checked;
     });
-    
-    const years = new Set(recommendations.map(movie => movie.year));
-    
-    yearFilter.innerHTML = '<option value="">Todos los años</option>';
-    [...years].sort().reverse().forEach(year => {
-        const option = document.createElement('option');
-        option.value = year;
-        option.textContent = year;
-        yearFilter.appendChild(option);
-    });
+
+    document.getElementById('applyFilters').addEventListener('click', applyFilters);
+    document.getElementById('clearFilters').addEventListener('click', clearFilters);
+
+    // Event listeners para los selectores múltiples
+    genreFilter.addEventListener('change', updateActiveFiltersDisplay);
+    yearFilter.addEventListener('change', updateActiveFiltersDisplay);
 }
 
 // Función para analizar preferencias del usuario
@@ -500,13 +512,71 @@ function filterRecommendations() {
     displayRecommendations();
 }
 
+// Nueva función para aplicar los filtros
+function applyFilters() {
+    activeFilters.genres = Array.from(genreFilter.selectedOptions).map(option => option.value);
+    activeFilters.years = Array.from(yearFilter.selectedOptions).map(option => parseInt(option.value));
+
+    recommendations = allRecommendations.filter(movie => {
+        const matchesGenres = activeFilters.genres.length === 0 ? true :
+            activeFilters.matchAllGenres ?
+                activeFilters.genres.every(genre => movie.genres.includes(genre)) :
+                activeFilters.genres.some(genre => movie.genres.includes(genre));
+
+        const matchesYears = activeFilters.years.length === 0 ? true :
+            activeFilters.years.includes(movie.year);
+
+        return matchesGenres && matchesYears;
+    });
+
+    updateActiveFiltersDisplay();
+    displayRecommendations();
+}
+
+// Nueva función para mostrar los filtros activos
+function updateActiveFiltersDisplay() {
+    const activeFiltersContainer = document.getElementById('activeFilters');
+    const activeGenres = Array.from(genreFilter.selectedOptions).map(opt => opt.value);
+    const activeYears = Array.from(yearFilter.selectedOptions).map(opt => opt.value);
+
+    if (activeGenres.length === 0 && activeYears.length === 0) {
+        activeFiltersContainer.innerHTML = '<em class="text-muted">Sin filtros activos</em>';
+        return;
+    }
+
+    const filters = [];
+    if (activeGenres.length > 0) {
+        filters.push(`<strong>Géneros:</strong> ${activeGenres.join(', ')}`);
+    }
+    if (activeYears.length > 0) {
+        filters.push(`<strong>Años:</strong> ${activeYears.join(', ')}`);
+    }
+
+    activeFiltersContainer.innerHTML = `
+        <div class="alert alert-info mb-0">
+            <h6 class="mb-2">Filtros activos:</h6>
+            ${filters.join('<br>')}
+            ${activeFilters.matchAllGenres ? 
+                '<br><em>(Coincidiendo con todos los géneros seleccionados)</em>' : 
+                ''}
+        </div>
+    `;
+}
+
 // Función para limpiar los filtros
 function clearFilters() {
     genreFilter.value = '';
     yearFilter.value = '';
+    document.getElementById('matchAllGenres').checked = false;
+    
+    activeFilters = {
+        genres: [],
+        years: [],
+        matchAllGenres: false
+    };
     
     recommendations = [...allRecommendations];
-    
+    updateActiveFiltersDisplay();
     displayRecommendations();
 }
 
